@@ -3,11 +3,11 @@ Merges **manual keywords** into an existing Excel bibliometrics workbook, normal
 
 ## Expected input (Excel, .xlsx)
 Required sheets:
-- `keywords_por_artigo` — columns: doi, pmid, revista, publisher_domain, keyword, fonte_keyword
-- `artigos_sem_keywords` — columns: doi, pmid, revista, publisher_domain, **KW - busca manual** (free text)
-- `revistas_por_artigo` — columns: doi, pmid, revista, publisher_domain
+- `keywords_per_article` — columns: doi, pmid, journal, publisher_domain, keyword, fonte_keyword
+- `articles_without_keywords` — columns: doi, pmid, journal, publisher_domain, **KW - manual search** (free text)
+- `journals_per_paper` — columns: doi, pmid, journal, publisher_domain
 Optional:
-- `diagnostico` — columns: metric, value
+- `diagnosis` — columns: metric, value
 
 ## Installation
 Python 3.10+  
