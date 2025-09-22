@@ -45,14 +45,14 @@ for _, row in df_no_kw.iterrows():
         df_manual_rows.append({
             "doi": row.get("doi"),
             "pmid": row.get("pmid"),
-            "revista": row.get("revista"),
+            "journal": row.get("journal"),
             "publisher_domain": row.get("publisher_domain"),
             "keyword": kw,
             "fonte_keyword": "manual"
         })
 
 df_manual = pd.DataFrame(df_manual_rows, columns=[
-    "doi","pmid","revista","publisher_domain","keyword","fonte_keyword"
+    "doi","pmid","journal","publisher_domain","keyword","fonte_keyword"
 ])
 
 # ---- 3) Merge with existing keywords and recalculate frequency ----
@@ -68,7 +68,7 @@ else:
     df_kw_freq_new = pd.DataFrame(columns=["keyword","frequencia"])
 
 # ---- 4) Which DOIs (non-conference) were still without keywords after the merger? ----
-# Non-conference row base (with duplicates) = 'revistas_por_artigo' itself
+# Non-conference row base (with duplicates) = 'journals_por_article' itself
 base_rev_dois_all = df_rev["doi"].dropna().astype(str).tolist()
 dois_com_kw_pos = set(df_kw_new["doi"].dropna().astype(str).unique())
 
@@ -79,7 +79,7 @@ for _, r in df_rev.iterrows():
         rows_rest.append({
             "doi": d,
             "pmid": r.get("pmid"),
-            "revista": r.get("revista"),
+            "journal": r.get("journal"),
             "publisher_domain": r.get("publisher_domain"),
             "observacao": "continua_sem_keywords_apos_uniao"
         })
@@ -95,10 +95,10 @@ n_nonconf_unique    = df_rev["doi"].nunique() if not df_rev.empty else 0
 pct_no_kw_unique_pos = round(100.0 * n_no_kw_unique_pos / n_nonconf_unique, 2) if n_nonconf_unique else 0.0
 
 df_diag_add = pd.DataFrame([
-    {"metric":"linhas_keywords_por_artigo_pos_merge", "value": n_kw_lines_pos},
+    {"metric":"lines_keywords_per_article_pos_merge", "value": n_kw_lines_pos},
     {"metric":"keywords_unicas_pos_merge",            "value": n_kw_unique_pos},
-    {"metric":"artigos_sem_keywords_dois_unicos_pos_merge",             "value": n_no_kw_unique_pos},
-    {"metric":"artigos_sem_keywords_pct_dos_nao_conferencia_pos_merge", "value": pct_no_kw_unique_pos},
+    {"metric":"articles_without_keywords_dois_unicos_pos_merge",             "value": n_no_kw_unique_pos},
+    {"metric":"articles_without_keywords_pct_dos_nao_conferencia_pos_merge", "value": pct_no_kw_unique_pos},
 ])
 
 df_diag_new = pd.concat([df_diag_old, df_diag_add], ignore_index=True)
@@ -114,17 +114,17 @@ with pd.ExcelWriter(OUT_XLSX, engine="openpyxl") as xlw:
     # sobrescritas/novas
     df_kw_new.to_excel(xlw, index=False, sheet_name=SHEET_KW)
     df_kw_freq_new.to_excel(xlw, index=False, sheet_name=SHEET_KW_FREQ)
-    # mantemos a aba original de 'artigos_sem_keywords' como estava
+    # mantemos a aba original de 'articles_without_keywords' como estava
     sheets[SHEET_NO_KW].to_excel(xlw, index=False, sheet_name=SHEET_NO_KW)
     # e criamos a aba com os que AINDA ficaram sem KWs
-    df_no_kw_rest.to_excel(xlw, index=False, sheet_name="artigos_sem_keywords_restantes")
+    df_no_kw_rest.to_excel(xlw, index=False, sheet_name="articles_without_keywords_restantes")
     # diagnóstico acrescido
     df_diag_new.to_excel(xlw, index=False, sheet_name=SHEET_DIAG)
 
 print("Unification complete!")
 print("Generated file:", OUT_XLSX)
 print("Post-union summary:")
-print(" - linhas_keywords_por_artigo_pos_merge:", n_kw_lines_pos)
+print(" - linhas_keywords_por_article_pos_merge:", n_kw_lines_pos)
 print(" - keywords_unicas_pos_merge:", n_kw_unique_pos)
-print(" - artigos_sem_keywords_dois_unicos_pos_merge:", n_no_kw_unique_pos)
-print(" - artigos_sem_keywords_pct_dos_nao_conferencia_pos_merge:", pct_no_kw_unique_pos, "%")
+print(" - articles_without_keywords_dois_unicos_pos_merge:", n_no_kw_unique_pos)
+print(" - articles_sem_keywords_pct_dos_nao_conferencia_pos_merge:", pct_no_kw_unique_pos, "%")
