@@ -2,15 +2,15 @@ import pandas as pd
 import re
 
 # ===== CONFIG =====
-IN_XLSX  = "RP11(final antes de unir KWs).xlsx"   # sua planilha já pronta
-OUT_XLSX = "RP12[KWs unidas com manuais].xlsx"    # saída
-SHEET_KW        = "keywords_por_artigo"
-SHEET_KW_FREQ   = "keywords_frequencia"
-SHEET_NO_KW     = "artigos_sem_keywords"
-SHEET_REV       = "revistas_por_artigo"
-SHEET_DIAG      = "diagnostico"
-MANUAL_COL      = "KW - busca manual"            # nome exato da coluna que você preencheu
-KEYWORD_NORMALIZE = "upper"                      # "upper" (recomendado) ou "title"
+IN_XLSX  = "RP11(final antes de unir KWs).xlsx"   # your spreadsheet
+OUT_XLSX = "RP12[KWs unidas com manuais].xlsx"    # output
+SHEET_KW        = "keywords_per_article"
+SHEET_KW_FREQ   = "keywords_frequency"
+SHEET_NO_KW     = "articles_without_keywords"
+SHEET_REV       = "journasls_per_paper"
+SHEET_DIAG      = "diagnosis"
+MANUAL_COL      = "KW - manual search"            # exact name of the column you filled in
+KEYWORD_NORMALIZE = "upper"                      # "upper" (recomended) ou "title"
 # ===================
 
 def normalize_keyword(s: str) -> str:
@@ -31,7 +31,7 @@ df_no_kw    = sheets[SHEET_NO_KW].copy()
 df_rev      = sheets[SHEET_REV].copy()
 df_diag_old = sheets.get(SHEET_DIAG, pd.DataFrame(columns=["metric","value"])).copy()
 
-# ---- 2) Expandir keywords manuais (respeita duplicatas do input) ----
+# ---- 2) Expand manual keywords (respects input duplicates) ----
 df_no_kw[MANUAL_COL] = df_no_kw.get(MANUAL_COL, "").astype(str)
 
 df_manual_rows = []
@@ -55,7 +55,7 @@ df_manual = pd.DataFrame(df_manual_rows, columns=[
     "doi","pmid","revista","publisher_domain","keyword","fonte_keyword"
 ])
 
-# ---- 3) Unir com as keywords existentes e recalcular frequência ----
+# ---- 3) Merge with existing keywords and recalculate frequency ----
 df_kw_new = pd.concat([df_kw_old, df_manual], ignore_index=True)
 
 if not df_kw_new.empty:
@@ -67,8 +67,8 @@ if not df_kw_new.empty:
 else:
     df_kw_freq_new = pd.DataFrame(columns=["keyword","frequencia"])
 
-# ---- 4) Quais DOIs (não-conferência) ainda ficaram sem keywords após a união? ----
-# Base de linhas não-conferência (com duplicatas) = a própria 'revistas_por_artigo'
+# ---- 4) Which DOIs (non-conference) were still without keywords after the merger? ----
+# Non-conference row base (with duplicates) = 'revistas_por_artigo' itself
 base_rev_dois_all = df_rev["doi"].dropna().astype(str).tolist()
 dois_com_kw_pos = set(df_kw_new["doi"].dropna().astype(str).unique())
 
@@ -85,7 +85,7 @@ for _, r in df_rev.iterrows():
         })
 df_no_kw_rest = pd.DataFrame(rows_rest)
 
-# ---- 5) Diagnóstico pós-união ----
+# ---- 5) Post-union diagnosis ----
 n_kw_lines_pos   = len(df_kw_new)
 n_kw_unique_pos  = df_kw_freq_new.shape[0]
 
@@ -103,7 +103,7 @@ df_diag_add = pd.DataFrame([
 
 df_diag_new = pd.concat([df_diag_old, df_diag_add], ignore_index=True)
 
-# ---- 6) Gravar novo arquivo mantendo as outras abas inalteradas ----
+# ---- 6) Save new file keeping other tabs unchanged ----
 with pd.ExcelWriter(OUT_XLSX, engine="openpyxl") as xlw:
     for name, df in sheets.items():
         # vamos sobrescrever as que atualizamos abaixo
@@ -121,9 +121,9 @@ with pd.ExcelWriter(OUT_XLSX, engine="openpyxl") as xlw:
     # diagnóstico acrescido
     df_diag_new.to_excel(xlw, index=False, sheet_name=SHEET_DIAG)
 
-print("✅ Unificação concluída!")
-print("Arquivo gerado:", OUT_XLSX)
-print("Resumo pós-união:")
+print("Unification complete!")
+print("Generated file:", OUT_XLSX)
+print("Post-union summary:")
 print(" - linhas_keywords_por_artigo_pos_merge:", n_kw_lines_pos)
 print(" - keywords_unicas_pos_merge:", n_kw_unique_pos)
 print(" - artigos_sem_keywords_dois_unicos_pos_merge:", n_no_kw_unique_pos)
