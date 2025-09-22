@@ -1,0 +1,32 @@
+# -----
+# Load libraries
+from sentence_transformers import SentenceTransformer, util
+import pandas as pd
+import numpy as np
+
+model = SentenceTransformer("sentence-transformers/allenai-specter")
+
+# Function to read .csv and ensure a 'title' column exists
+def csv_to_dataframe(file_path):
+    df = pd.read_csv(file_path)
+    df["title"] = df["title"].fillna("")  # Ensures the 'title' column is present
+    return df
+
+# Load dataset
+df = csv_to_dataframe("articles.csv")
+
+# Generate embeddings from titles
+df["embedding"] = df["title"].apply(lambda x: model.encode(x, convert_to_numpy=True))
+
+# Intent sentence
+intent_query = "Health [example]"
+intent_embedding = model.encode(intent_query, convert_to_numpy=True)
+
+# Compute cosine similarity with the intent
+df["intent_similarity"] = df["embedding"].apply(lambda x: util.cos_sim(x, intent_embedding).item())
+
+# Select the top 20% most similar titles
+top_pareto_intent = df.sort_values("intent_similarity", ascending=False).head(int(0.2 * len(df)))
+
+# Export a CSV containing title and DOI
+top_pareto_intent[["title", "intent_similarity", "doi"]].to_csv("top_20_with_doi.csv", index=False)
